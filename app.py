@@ -1,6 +1,17 @@
 import streamlit as st
-import whisper
+from transformers import pipeline
 
-st.title("🔊 Whisper Test")
-model = whisper.load_model("tiny")  # use tiny model to reduce memory load
-st.success("Model loaded successfully!")
+@st.cache_resource
+def load_summarizer():
+    return pipeline("summarization", model="t5-small", tokenizer="t5-small")
+
+summarizer = load_summarizer()
+
+st.title("🧠 Summarizer Test")
+text = st.text_area("Enter long text to summarize:")
+
+if text:
+    with st.spinner("Summarizing..."):
+        summary = summarizer(text, max_length=80, min_length=20, do_sample=False)[0]['summary_text']
+        st.success("Done!")
+        st.write(summary)
