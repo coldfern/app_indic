@@ -2,7 +2,3 @@ streamlit
 whisper
 transformers
 torch
-pillow
-paddlepaddle==2.6.2
-paddleocr==2.6.1.3
-
