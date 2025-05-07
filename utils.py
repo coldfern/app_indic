@@ -1,6 +1,7 @@
 import whisper
 import torch
-import easyocr
+from PIL import Image
+import pytesseract
 from transformers import pipeline
 
 # Load once
@@ -22,5 +23,6 @@ def summarize_text(text):
     return summary
 
 def ocr_from_image(image):
-    result = reader.readtext(image, detail=0)
-    return " ".join(result)
+    img = Image.open(image)
+    text = pytesseract.image_to_string(img)
+    return text
