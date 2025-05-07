@@ -1,8 +1,8 @@
 import whisper
 import torch
 from transformers import pipeline
+from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 from PIL import Image
-import pytesseract
 
 # Load Whisper
 asr_model = whisper.load_model("small")
@@ -21,7 +21,14 @@ def summarize_text(text):
     summary = summarizer(text, max_length=100, min_length=30, do_sample=False)[0]['summary_text']
     return summary
 
+
+# Load OCR model and processor
+processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
+ocr_model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
+
 def ocr_from_image(image):
-    img = Image.open(image)
-    text = pytesseract.image_to_string(img)
+    img = Image.open(image).convert("RGB")
+    pixel_values = processor(images=img, return_tensors="pt").pixel_values
+    generated_ids = ocr_model.generate(pixel_values)
+    text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
     return text
