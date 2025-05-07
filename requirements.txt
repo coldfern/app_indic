@@ -2,5 +2,6 @@ streamlit
 whisper
 transformers
 torch
+pillow
+paddlepaddle==2.5.2
 paddleocr
-Pillow
