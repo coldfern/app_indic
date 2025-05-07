@@ -1,8 +1,7 @@
-fastapi
-uvicorn
+streamlit
 openai-whisper
-transformers==4.30.2
-torch==2.0.1
-sentencepiece
-googletrans==4.0.0-rc1
-python-multipart
+transformers
+torch
+torchaudio
+easyocr
+Pillow
