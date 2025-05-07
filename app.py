@@ -1,40 +1,38 @@
 import streamlit as st
-from utils import transcribe_audio, summarize_text, ocr_from_image
+from transformers import pipeline
+import whisper
 import tempfile
 
-st.title("🩺 Medical Assistant App")
+@st.cache_resource
+def load_model():
+    return whisper.load_model("tiny")
 
-st.sidebar.header("Choose a feature")
-feature = st.sidebar.selectbox("", ["Speech to Text", "Image to Text (OCR)"])
+@st.cache_resource
+def load_summarizer():
+    return pipeline("summarization", model="t5-small")
 
-if feature == "Speech to Text":
-    st.header("🎤 Speech to Text (Hindi/Hinglish)")
-    audio_file = st.file_uploader("Upload your audio file (.wav/.mp3)", type=["wav", "mp3"])
+model = load_model()
+summarizer = load_summarizer()
 
-    if audio_file is not None:
-        with tempfile.NamedTemporaryFile(delete=False) as tmp:
-            tmp.write(audio_file.read())
-            tmp_path = tmp.name
-        with st.spinner("Transcribing..."):
-            transcript = transcribe_audio(tmp_path)
+st.title("🎙️ Speech to Text + Summary")
+
+audio_file = st.file_uploader("Upload an audio file (.mp3/.wav)", type=["mp3", "wav"])
+
+if audio_file is not None:
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(audio_file.read())
+        tmp_path = tmp.name
+
+    with st.spinner("Transcribing..."):
+        result = model.transcribe(tmp_path, language='hi')
+        transcript = result['text']
         st.success("Transcription Complete!")
         st.write("**Transcript (English):**", transcript)
 
+    if len(transcript.split()) > 10:
         with st.spinner("Summarizing..."):
-            summary = summarize_text(transcript)
-        st.write("**Summary:**", summary)
-
-elif feature == "Image to Text (OCR)":
-    st.header("🖼️ Image to Text from Medical Reports")
-    uploaded_image = st.file_uploader("Upload an image of your medical report", type=["jpg", "png", "jpeg", "bmp"])
-
-    if uploaded_image is not None:
-        st.image(uploaded_image, caption="Uploaded Report", use_column_width=True)
-        with st.spinner("Extracting text..."):
-            text = ocr_from_image(uploaded_image)
-        st.success("Text Extraction Complete!")
-        st.write("**Extracted Text:**", text)
-
-        with st.spinner("Summarizing..."):
-            summary = summarize_text(text)
-        st.write("**Summary of Insights:**", summary)
+            summary = summarizer(transcript, max_length=80, min_length=20, do_sample=False)[0]['summary_text']
+            st.success("Summary:")
+            st.write(summary)
+    else:
+        st.warning("Transcript too short to summarize.")
