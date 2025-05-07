@@ -1,11 +1,11 @@
 import streamlit as st
 from transformers import pipeline
-import whisper
+from faster_whisper import WhisperModel
 import tempfile
 
 @st.cache_resource
 def load_model():
-    return whisper.load_model("tiny")
+    return WhisperModel("tiny", compute_type="int8")
 
 @st.cache_resource
 def load_summarizer():
@@ -19,13 +19,13 @@ st.title("🎙️ Speech to Text + Summary")
 audio_file = st.file_uploader("Upload an audio file (.mp3/.wav)", type=["mp3", "wav"])
 
 if audio_file is not None:
-    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
         tmp.write(audio_file.read())
         tmp_path = tmp.name
 
     with st.spinner("Transcribing..."):
-        result = model.transcribe(tmp_path, language='hi')
-        transcript = result['text']
+        segments, _ = model.transcribe(tmp_path, language="hi")
+        transcript = " ".join([seg.text for seg in segments])
         st.success("Transcription Complete!")
         st.write("**Transcript (English):**", transcript)
 
