@@ -1,15 +1,19 @@
 import whisper
 import torch
-from transformers import pipeline
-from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+from transformers import pipeline, TrOCRProcessor, VisionEncoderDecoderModel
 from PIL import Image
 
-# Load Whisper
-asr_model = whisper.load_model("small")
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Load summarizer
+# Whisper ASR
+asr_model = whisper.load_model("small")
+
+# Summarization
 summarizer = pipeline("summarization", model="t5-base", tokenizer="t5-base", device=0 if device == "cuda" else -1)
+
+# TrOCR for OCR
+processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
+ocr_model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
 
 def transcribe_audio(audio_path):
     result = asr_model.transcribe(audio_path, language='hi')
@@ -20,11 +24,6 @@ def summarize_text(text):
         return "Text too short to summarize."
     summary = summarizer(text, max_length=100, min_length=30, do_sample=False)[0]['summary_text']
     return summary
-
-
-# Load OCR model and processor
-processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
-ocr_model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
 
 def ocr_from_image(image):
     img = Image.open(image).convert("RGB")
