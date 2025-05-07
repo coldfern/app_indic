@@ -5,7 +5,7 @@ import tempfile
 
 @st.cache_resource
 def load_model():
-    return WhisperModel("tiny", compute_type="int8")
+    return WhisperModel("medium", compute_type="int8")
 
 @st.cache_resource
 def load_summarizer():
