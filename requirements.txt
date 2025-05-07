@@ -1,4 +1,4 @@
 streamlit
-whisper
 transformers
 torch
+faster-whisper
