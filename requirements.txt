@@ -1,6 +1,6 @@
 streamlit
+whisper
 transformers
 torch
-torchaudio
+paddleocr
 Pillow
-openai-whisper
