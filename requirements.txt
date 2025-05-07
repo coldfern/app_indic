@@ -3,5 +3,4 @@ openai-whisper
 transformers
 torch
 torchaudio
-pytesseract
-Pillow
+pillow
