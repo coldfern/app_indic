@@ -1,15 +1,14 @@
 import whisper
 import torch
+from transformers import pipeline
 from PIL import Image
 import pytesseract
-from transformers import pipeline
 
-# Load once
+# Load Whisper
 asr_model = whisper.load_model("small")
-reader = easyocr.Reader(['en'], gpu=False)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Summarizer
+# Load summarizer
 summarizer = pipeline("summarization", model="t5-base", tokenizer="t5-base", device=0 if device == "cuda" else -1)
 
 def transcribe_audio(audio_path):
