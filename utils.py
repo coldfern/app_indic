@@ -2,32 +2,36 @@ import whisper
 import torch
 from transformers import pipeline, TrOCRProcessor, VisionEncoderDecoderModel
 from PIL import Image
+import streamlit as st
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+@st.cache_resource
+def load_whisper():
+    return whisper.load_model("tiny")
 
-# Whisper ASR
-asr_model = whisper.load_model("small")
+@st.cache_resource
+def load_summarizer():
+    return pipeline("summarization", model="t5-small", tokenizer="t5-small")
 
-# Summarization
-summarizer = pipeline("summarization", model="t5-base", tokenizer="t5-base", device=0 if device == "cuda" else -1)
+@st.cache_resource
+def load_ocr():
+    processor = TrOCRProcessor.from_pretrained("microsoft/trocr-small-handwritten")
+    model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-small-handwritten")
+    return processor, model
 
-# TrOCR for OCR
-processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
-ocr_model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
-
-def transcribe_audio(audio_path):
-    result = asr_model.transcribe(audio_path, language='hi')
+def transcribe_audio(path):
+    model = load_whisper()
+    result = model.transcribe(path, language='hi')
     return result["text"]
 
 def summarize_text(text):
+    summarizer = load_summarizer()
     if len(text.split()) < 30:
-        return "Text too short to summarize."
-    summary = summarizer(text, max_length=100, min_length=30, do_sample=False)[0]['summary_text']
-    return summary
+        return "Too short to summarize."
+    return summarizer(text, max_length=80, min_length=20, do_sample=False)[0]['summary_text']
 
 def ocr_from_image(image):
+    processor, model = load_ocr()
     img = Image.open(image).convert("RGB")
     pixel_values = processor(images=img, return_tensors="pt").pixel_values
-    generated_ids = ocr_model.generate(pixel_values)
-    text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
-    return text
+    generated_ids = model.generate(pixel_values)
+    return processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
