@@ -1,4 +1,6 @@
 import streamlit as st
+import whisper
 
-st.title("✅ Hello Streamlit Cloud!")
-st.write("If you're seeing this, your app is running correctly.")
+st.title("🔊 Whisper Test")
+model = whisper.load_model("tiny")  # use tiny model to reduce memory load
+st.success("Model loaded successfully!")
