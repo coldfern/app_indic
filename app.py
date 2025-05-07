@@ -1,11 +1,11 @@
 import streamlit as st
 from transformers import pipeline
-from faster_whisper import WhisperModel
+import whisper
 import tempfile
 
 @st.cache_resource
 def load_model():
-    return WhisperModel("medium", compute_type="int8")
+    return whisper.load_model("medium")  # "medium" for better accuracy
 
 @st.cache_resource
 def load_summarizer():
@@ -24,8 +24,8 @@ if audio_file is not None:
         tmp_path = tmp.name
 
     with st.spinner("Transcribing..."):
-        segments, _ = model.transcribe(tmp_path, language="hi")
-        transcript = " ".join([seg.text for seg in segments])
+        result = model.transcribe(tmp_path, language='hi')  # Hindi language
+        transcript = result['text']
         st.success("Transcription Complete!")
         st.write("**Transcript (English):**", transcript)
 
