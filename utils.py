@@ -1,8 +1,9 @@
+from paddleocr import PaddleOCR
+from transformers import pipeline
 import whisper
-import torch
-from transformers import pipeline, TrOCRProcessor, VisionEncoderDecoderModel
-from PIL import Image
 import streamlit as st
+from PIL import Image
+import numpy as np
 
 @st.cache_resource
 def load_whisper():
@@ -14,24 +15,23 @@ def load_summarizer():
 
 @st.cache_resource
 def load_ocr():
-    processor = TrOCRProcessor.from_pretrained("microsoft/trocr-small-handwritten")
-    model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-small-handwritten")
-    return processor, model
+    return PaddleOCR(use_angle_cls=True, lang='en')
+
+whisper_model = load_whisper()
+summarizer = load_summarizer()
+ocr_model = load_ocr()
 
 def transcribe_audio(path):
-    model = load_whisper()
-    result = model.transcribe(path, language='hi')
+    result = whisper_model.transcribe(path, language='hi')
     return result["text"]
 
 def summarize_text(text):
-    summarizer = load_summarizer()
     if len(text.split()) < 30:
         return "Too short to summarize."
     return summarizer(text, max_length=80, min_length=20, do_sample=False)[0]['summary_text']
 
-def ocr_from_image(image):
-    processor, model = load_ocr()
-    img = Image.open(image).convert("RGB")
-    pixel_values = processor(images=img, return_tensors="pt").pixel_values
-    generated_ids = model.generate(pixel_values)
-    return processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+def ocr_from_image(image_file):
+    img = np.array(Image.open(image_file).convert("RGB"))
+    result = ocr_model.ocr(img, cls=True)
+    text = " ".join([line[1][0] for line in result[0]])
+    return text
