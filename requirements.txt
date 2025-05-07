@@ -3,5 +3,5 @@ openai-whisper
 transformers
 torch
 torchaudio
-easyocr
+pytesseract
 Pillow
